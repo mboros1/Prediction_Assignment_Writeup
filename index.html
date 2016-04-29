@@ -1,0 +1,332 @@
+<!doctype html>
+<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
+<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on https://github.com/jonrohan -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen">
+  <link rel="stylesheet" href="stylesheets/github-dark.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="javascripts/script.js"></script>
+
+  <title>Prediction assignment writeup</title>
+  <meta name="description" content="Final Project for Coursera Data Science Course on Machine Learning">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <header>
+      <h1 class="title">Prediction assignment writeup</h1>
+    </header>
+    <div id="container">
+      <p class="tagline">Final Project for Coursera Data Science Course on Machine Learning</p>
+      <div id="main" role="main">
+        <div class="download-bar">
+        <div class="inner">
+          <a href="https://github.com/mboros1/Prediction_Assignment_Writeup/tarball/master" class="download-button tar"><span>Download</span></a>
+          <a href="https://github.com/mboros1/Prediction_Assignment_Writeup/zipball/master" class="download-button zip"><span>Download</span></a>
+          <a href="https://github.com/mboros1/Prediction_Assignment_Writeup" class="code">View Prediction assignment writeup on GitHub</a>
+        </div>
+        <span class="blc"></span><span class="trc"></span>
+        </div>
+        <article class="markdown-body">
+          <p>&lt;!DOCTYPE html&gt;</p>
+
+<p></p>
+
+<p></p>
+
+<p>
+
+
+</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>Prediction Assignment Writeup
+
+
+
+<p>
+</p>
+
+
+
+
+
+
+
+code{white-space: pre;}
+
+<p></p>
+
+
+
+
+  pre:not([class]) {
+    background-color: white;
+  }
+
+
+
+
+<p></p>
+
+<p></p>
+
+
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+
+
+<div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="header">
+
+
+<h1>
+<a id="prediction-assignment-writeup" class="anchor" href="#prediction-assignment-writeup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Prediction Assignment Writeup</h1>
+<h4>
+<a id="martin-boros" class="anchor" href="#martin-boros" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>Martin Boros</em>
+</h4>
+<h4>
+<a id="april-29-2016" class="anchor" href="#april-29-2016" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><em>April 29, 2016</em>
+</h4>
+
+</div>
+
+<div id="load-packages-load-the-datasets-set-the-seed.">
+<h2>
+<a id="load-packages-load-the-datasets-set-the-seed" class="anchor" href="#load-packages-load-the-datasets-set-the-seed" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Load packages, load the datasets, set the seed.</h2>
+<pre><code>library(caret)
+library(randomForest)
+library(plyr)
+set.seed(123)
+workoutdata = read.csv("pml-training.csv")
+testset = read.csv("pml-testing.csv")</code></pre>
+</div>
+
+<div id="cross-validation">
+<h2>
+<a id="cross-validation" class="anchor" href="#cross-validation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cross Validation</h2>
+<p>The training data set is broken up into a set for training the machine learning algorithm and testing its efficacy. For cross-validation, the “out-of-bag” estimates method was used with a 10-fold cross-validation repeated 10 times.</p>
+<pre><code>inTrain = createDataPartition(workoutdata$classe, p = 3/4)[[1]]
+training = workoutdata[inTrain,]
+testing = workoutdata[-inTrain,]
+modelcontrol = trainControl(method = "oob", number = 10, repeats = 10)</code></pre>
+</div>
+
+<div id="setting-up-the-predictive-model">
+<h2>
+<a id="setting-up-the-predictive-model" class="anchor" href="#setting-up-the-predictive-model" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setting up the Predictive Model</h2>
+<p>While there were 159 available features, a huge majority of them contained missing data and data of questionable value. Ignoring these features cut the available number of features down to about 59. Using these 59 features, the data set became overfitted to the training data set and performed poorly on the test data set. I was able to create a highly effective model using 6 features: the user name, part of the timestamp, and 3 pieces of the belt device’s data. While this gave fantastic results and seemed to be in line with the question asked, it felt like it was “cheating” since the timestamp tracked when each exercise was performed, making it very predictive while not actually giving any useful insights on how the exercise was performed. Because of this, I created a second model whose features were the user name, and data from the belt device and forearm device. While it was not quite as predictive as the model using the timestamp, it seemed more inline with the spirit of the test that was performed.</p>
+<pre><code>model = randomForest(classe ~ user_name + raw_timestamp_part_1 + roll_belt + pitch_belt + yaw_belt + total_accel_belt, data = training, trainControl = modelcontrol)
+modelfair = randomForest(classe ~ user_name + roll_belt + pitch_belt + yaw_belt + total_accel_belt + gyros_forearm_y + gyros_forearm_z + gyros_forearm_x + accel_forearm_x + accel_forearm_y + accel_forearm_z + magnet_forearm_x + magnet_forearm_y + magnet_forearm_z, data = training, trainControl = modelcontrol)</code></pre>
+<p>For the predictive models, I used the Random Forest method. The computation time was quite low, and had the highest accuracy from the methods outlined in the Machine Learning course.</p>
+<pre><code>p = predict(model, testing[,-160])
+confusionMatrix(p, testing$classe)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1393    0    0    0    0
+##          B    2  948    4    0    0
+##          C    0    1  850    1    0
+##          D    0    0    1  800    1
+##          E    0    0    0    3  900
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9973          
+##                  95% CI : (0.9955, 0.9986)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9966          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9986   0.9989   0.9942   0.9950   0.9989
+## Specificity            1.0000   0.9985   0.9995   0.9995   0.9993
+## Pos Pred Value         1.0000   0.9937   0.9977   0.9975   0.9967
+## Neg Pred Value         0.9994   0.9997   0.9988   0.9990   0.9998
+## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
+## Detection Rate         0.2841   0.1933   0.1733   0.1631   0.1835
+## Detection Prevalence   0.2841   0.1945   0.1737   0.1635   0.1841
+## Balanced Accuracy      0.9993   0.9987   0.9968   0.9973   0.9991</code></pre>
+<pre><code>error = 1 - .9973
+error</code></pre>
+<pre><code>## [1] 0.0027</code></pre>
+<p>Here we can see the accuracy of the model on the test set is 99.73%, giving us an estimated out of sample error of 0.23%.</p>
+<pre><code>pfair = predict(modelfair, testing[,-160])
+confusionMatrix(pfair, testing$classe)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1368    5    2    6    0
+##          B    7  929   25    4    4
+##          C    4   14  807    8    2
+##          D   16    1   20  785    2
+##          E    0    0    1    1  893
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9751          
+##                  95% CI : (0.9704, 0.9793)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9685          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9806   0.9789   0.9439   0.9764   0.9911
+## Specificity            0.9963   0.9899   0.9931   0.9905   0.9995
+## Pos Pred Value         0.9906   0.9587   0.9665   0.9527   0.9978
+## Neg Pred Value         0.9923   0.9949   0.9882   0.9953   0.9980
+## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
+## Detection Rate         0.2790   0.1894   0.1646   0.1601   0.1821
+## Detection Prevalence   0.2816   0.1976   0.1703   0.1680   0.1825
+## Balanced Accuracy      0.9885   0.9844   0.9685   0.9834   0.9953</code></pre>
+<pre><code>error = 1 - .9753
+error</code></pre>
+<pre><code>## [1] 0.0247</code></pre>
+<p>This model is less accurate, but more “fair”. The estimated out of sample error is 2.47%.</p>
+</div>
+
+<div id="final-comparison">
+<h2>
+<a id="final-comparison" class="anchor" href="#final-comparison" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Final comparison</h2>
+<pre><code>pfinal = predict(model, testset)
+pfairfinal = predict(modelfair, testset)
+confusionMatrix(pfinal, pfairfinal)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction A B C D E
+##          A 7 0 0 0 0
+##          B 0 8 0 0 0
+##          C 0 0 1 0 0
+##          D 0 0 0 1 0
+##          E 0 0 0 0 3
+## 
+## Overall Statistics
+##                                      
+##                Accuracy : 1          
+##                  95% CI : (0.8316, 1)
+##     No Information Rate : 0.4        
+##     P-Value [Acc &gt; NIR] : 1.1e-08    
+##                                      
+##                   Kappa : 1          
+##  Mcnemar's Test P-Value : NA         
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity              1.00      1.0     1.00     1.00     1.00
+## Specificity              1.00      1.0     1.00     1.00     1.00
+## Pos Pred Value           1.00      1.0     1.00     1.00     1.00
+## Neg Pred Value           1.00      1.0     1.00     1.00     1.00
+## Prevalence               0.35      0.4     0.05     0.05     0.15
+## Detection Rate           0.35      0.4     0.05     0.05     0.15
+## Detection Prevalence     0.35      0.4     0.05     0.05     0.15
+## Balanced Accuracy        1.00      1.0     1.00     1.00     1.00</code></pre>
+<p>Both models are run on the original test set, and given the relatively small sample size (N=20), both tests were more then adequate to predict the outcomes perfectly.</p>
+</div>
+
+<p></p>
+</div>
+
+
+
+
+
+
+
+<p>
+</p>
+        </article>
+      </div>
+    </div>
+    <footer>
+      <div class="owner">
+      <p><a href="https://github.com/mboros1" class="avatar"><img src="https://avatars2.githubusercontent.com/u/13160711?v=3&amp;s=60" width="48" height="48"></a> <a href="https://github.com/mboros1">mboros1</a> maintains <a href="https://github.com/mboros1/Prediction_Assignment_Writeup">Prediction assignment writeup</a></p>
+
+
+      </div>
+      <div class="creds">
+        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br>theme by <a href="https://twitter.com/jonrohan/">Jon Rohan</a></small>
+      </div>
+    </footer>
+  </div>
+  <div class="current-section">
+    <a href="#top">Scroll to top</a>
+    <a href="https://github.com/mboros1/Prediction_Assignment_Writeup/tarball/master" class="tar">tar</a><a href="https://github.com/mboros1/Prediction_Assignment_Writeup/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
+    <p class="name"></p>
+  </div>
+
+  
+</body>
+</html>
